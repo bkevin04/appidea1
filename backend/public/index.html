@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Playground</title>
+<style>
+:root {
+  --bg: #f6f7fb; --card: #ffffff; --ink: #1d2233; --muted: #6b7288; --line: #e3e6ef;
+  --brand: #5b5bf0; --brand-ink: #ffffff; --good: #1f9d55; --good-bg: #e6f6ec; --bad: #d64545; --bad-bg: #fdecec;
+  --warn: #f29f05; --chip: #eef0ff; --shadow: 0 2px 0 rgba(20, 24, 40, .08);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #11131a; --card: #1b1e29; --ink: #eef0f7; --muted: #9aa1b7; --line: #2b3040;
+    --chip: #262a45; --good-bg: #173524; --bad-bg: #3a1c1c; --shadow: 0 2px 0 rgba(0,0,0,.4); }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 520px; margin: 0 auto; padding: 16px 16px 120px; }
+h1 { font-size: 24px; margin: 8px 0 4px; } h2 { font-size: 19px; margin: 20px 0 8px; } h3 { font-size: 16px; margin: 0 0 4px; }
+.muted { color: var(--muted); } .small { font-size: 13px; }
+.bar { display: flex; gap: 8px; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 5;
+  background: var(--bg); padding: 10px 0; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.pill { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin: 10px 0; box-shadow: var(--shadow); }
+button { font: inherit; cursor: pointer; border-radius: 14px; border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 12px 14px; box-shadow: var(--shadow); }
+button:disabled { opacity: .5; cursor: default; }
+button.primary { background: var(--brand); color: var(--brand-ink); border-color: transparent; font-weight: 700; }
+button.block { width: 100%; }
+button.opt { display: block; width: 100%; text-align: left; margin: 8px 0; }
+button.sel { outline: 3px solid var(--brand); outline-offset: -1px; }
+button.good { background: var(--good-bg); border-color: var(--good); } button.bad { background: var(--bad-bg); border-color: var(--bad); }
+textarea, input[type=text] { width: 100%; font: inherit; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+textarea { min-height: 120px; resize: vertical; }
+.row { display: flex; gap: 8px; } .row > * { flex: 1; }
+.chip { display: inline-block; background: var(--chip); border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; color: var(--brand); }
+.progress { height: 12px; background: var(--line); border-radius: 999px; overflow: hidden; flex: 1; }
+.progress > div { height: 100%; background: var(--good); transition: width .3s; }
+.path { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 16px 0; }
+.node { width: 100%; display: flex; gap: 12px; align-items: center; }
+.node .dot { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; flex: none; border: 4px solid var(--line); background: var(--card); }
+.node.current .dot { border-color: var(--brand); background: var(--chip); }
+.node.completed .dot { border-color: var(--good); background: var(--good-bg); }
+.node.locked { opacity: .55; }
+.stack { display: flex; flex-direction: column; gap: 8px; }
+.slot { border: 2px dashed var(--line); border-radius: 12px; padding: 10px 12px; min-height: 46px; }
+.slot.filled { border-style: solid; border-color: var(--brand); background: var(--chip); }
+.slot.missing { border-color: var(--warn); }
+.arrow { text-align: center; color: var(--muted); line-height: 1; }
+.bubble { background: var(--chip); border-radius: 16px 16px 16px 4px; padding: 10px 14px; margin: 8px 0; }
+.swipecard { min-height: 150px; display: grid; place-items: center; text-align: center; font-size: 18px; font-weight: 600; touch-action: pan-y; user-select: none; transition: transform .15s; }
+.bucketrow { display: flex; gap: 8px; flex-wrap: wrap; } .bucketrow button { flex: 1 1 30%; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .cols button { width: 100%; text-align: left; font-size: 14px; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line); padding: 16px; z-index: 10; max-height: 70vh; overflow: auto; }
+.sheet.good { background: var(--good-bg); } .sheet.bad { background: var(--bad-bg); }
+.sheet > div { max-width: 520px; margin: 0 auto; }
+.footer { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px; background: var(--bg); border-top: 1px solid var(--line); z-index: 9; }
+.footer > div { max-width: 520px; margin: 0 auto; }
+blockquote { margin: 8px 0; padding: 6px 12px; border-left: 3px solid var(--brand); color: var(--muted); font-size: 14px; }
+.big { font-size: 44px; text-align: center; margin: 12px 0 0; }
+.center { text-align: center; }
+.error { color: var(--bad); font-weight: 600; }
+input[type=range] { width: 100%; }
+ul.tight { margin: 6px 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+const $app = document.getElementById("app");
+const state = { userId: null, me: null };
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const MECH_ICON = { sequence: "⚙️", chain: "🔗", sort: "🗂️", match: "✨", scenario: "🎭", spot_error: "🕵️", estimate: "🎯", swipe: "👆", teach_back: "🧑‍🏫" };
+
+function store(k, v) { try { v === undefined ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} }
+function load(k) { try { return localStorage.getItem(k); } catch { return null; } }
+
+async function api(method, url, body, isForm) {
+  const headers = {};
+  if (state.userId) headers["x-user-id"] = state.userId;
+  if (body && !isForm) headers["content-type"] = "application/json";
+  const res = await fetch(url, { method, headers, body: body ? (isForm ? body : JSON.stringify(body)) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(data.error || res.statusText), { status: res.status });
+  return data;
+}
+
+async function ensureUser() {
+  state.userId = load("userId");
+  if (state.userId) {
+    try { state.me = await api("GET", "/me"); return; } catch (e) { if (e.status !== 401) throw e; }
+  }
+  const u = await api("POST", "/users", { name: "Tester" });
+  state.userId = u.id; store("userId", u.id);
+  state.me = await api("GET", "/me");
+}
+
+async function refreshMe() { state.me = await api("GET", "/me"); }
+
+function topBar() {
+  const m = state.me;
+  if (!m) return "";
+  return `<div class="bar">
+    <span class="pill" title="Streak">🔥 ${m.streak}</span>
+    <span class="pill" title="Level">⭐ Lv ${m.level}</span>
+    <span class="pill" title="Total XP">${m.xp} XP</span>
+    <span class="pill" title="Daily goal">${m.dailyGoal.met ? "✅" : "🎯"} ${m.dailyGoal.xp}/${m.dailyGoal.goal}</span>
+  </div>`;
+}
+
+// ---------------- Home ----------------
+async function showHome() {
+  await refreshMe();
+  const [courses, health] = await Promise.all([api("GET", "/courses"), api("GET", "/health")]);
+  $app.innerHTML = `${topBar()}
+    <h1>Your courses</h1>
+    <p class="muted small">Backend test playground · content generator: <b>${esc(health.generator)}</b>${health.model ? ` (${esc(health.model)})` : ""}</p>
+    ${courses.length ? courses.map((c) => `
+      <div class="card" data-course="${c.id}" style="cursor:pointer">
+        <h3>${esc(c.title)}</h3>
+        <div class="row" style="align-items:center"><div class="progress"><div style="width:${Math.round(c.progress * 100)}%"></div></div>
+        <span class="small muted" style="flex:none">${c.completedUnits}/${c.unitCount} units</span></div>
+      </div>`).join("") : `<div class="card muted">No courses yet. Try the sample, or turn your own text into a course.</div>`}
+    <button class="block" id="sample">📘 Add the sample course (“How Habits Work”)</button>
+    <h2>Make a course from your own document</h2>
+    <div class="card stack">
+      <input type="text" id="title" placeholder="Title (e.g. Atomic Habits, Chapter 1)">
+      <textarea id="text" placeholder="Paste text here: a chapter, an article, notes…"></textarea>
+      <button class="primary" id="create">Turn text into a course</button>
+      <div class="muted small center">or upload a .pdf, .txt or .md file</div>
+      <input type="file" id="file" accept=".pdf,.txt,.md">
+      <div id="err" class="error"></div>
+    </div>
+    <p class="small muted center"><a href="#" id="reset" class="muted">Start over as a new test user</a></p>`;
+  $app.querySelectorAll("[data-course]").forEach((el) => el.onclick = () => showCourse(el.dataset.course));
+  const err = (e) => { document.getElementById("err").textContent = e.message; };
+  document.getElementById("sample").onclick = async () => { try { showCourse((await api("POST", "/courses/sample")).id); } catch (e) { err(e); } };
+  document.getElementById("create").onclick = async (ev) => {
+    ev.target.disabled = true;
+    try {
+      const c = await api("POST", "/courses", { title: document.getElementById("title").value || "My course", text: document.getElementById("text").value });
+      showCourse(c.id);
+    } catch (e) { err(e); ev.target.disabled = false; }
+  };
+  document.getElementById("file").onchange = async (ev) => {
+    const f = ev.target.files[0]; if (!f) return;
+    const fd = new FormData();
+    const title = document.getElementById("title").value; if (title) fd.append("title", title);
+    fd.append("file", f);
+    try { showCourse((await api("POST", "/courses/upload", fd, true)).id); } catch (e) { err(e); }
+  };
+  document.getElementById("reset").onclick = (e) => { e.preventDefault(); store("userId", undefined); state.userId = null; boot(); };
+}
+
+// ---------------- Course path ----------------
+let pollTimer = null;
+async function showCourse(courseId) {
+  clearTimeout(pollTimer);
+  await refreshMe();
+  const c = await api("GET", `/courses/${courseId}`);
+  const current = c.units.find((u) => u.state === "current");
+  const busy = c.units.some((u) => u.status === "generating");
+  const canPlay = !current || current.status === "ready";
+  $app.innerHTML = `${topBar()}
+    <button id="back">← Courses</button>
+    <h1>${esc(c.title)}</h1>
+    <p class="muted small">${c.ideasLearned}/${c.ideasTotal} ideas learned · ${c.dueForReview} due for review · ${c.sourceWords.toLocaleString()} words of source</p>
+    <div class="path">${c.units.map((u) => `
+      <div class="node ${u.state}">
+        <div class="dot">${u.state === "completed" ? "✓" : u.state === "current" ? (u.status === "ready" ? "▶" : "⏳") : "🔒"}</div>
+        <div>
+          <h3>${esc(u.title)}</h3>
+          <div class="small muted">${u.status === "ready" ? `${u.ideasLearned}/${u.ideas} ideas · ${"★".repeat(Math.round(u.stars))}${"☆".repeat(5 - Math.round(u.stars))}` :
+            u.status === "failed" ? `<span class="error">Generation failed</span> <a href="#" data-retry="${u.idx}">retry</a>` :
+            u.status === "generating" ? "Building games…" : "Not generated yet"}</div>
+          ${u.hook && u.state === "current" ? `<div class="small">${esc(u.hook)}</div>` : ""}
+        </div>
+      </div>`).join("")}
+    </div>
+    <div class="footer"><div class="row">
+      <button id="cards">🃏 Idea cards</button>
+      <button class="primary" id="start" ${canPlay ? "" : "disabled"}>${!current ? "Practice" : current.status === "ready" ? "Start lesson" : "Preparing…"}</button>
+    </div><div id="err" class="error small center"></div></div>`;
+  document.getElementById("back").onclick = showHome;
+  document.getElementById("cards").onclick = () => showCards(courseId);
+  document.getElementById("start").onclick = async () => {
+    try { playSession(await api("POST", `/courses/${courseId}/sessions`)); }
+    catch (e) { document.getElementById("err").textContent = e.message; }
+  };
+  $app.querySelectorAll("[data-retry]").forEach((a) => a.onclick = async (e) => { e.preventDefault(); await api("POST", `/courses/${courseId}/units/${a.dataset.retry}/retry`); showCourse(courseId); });
+  if (busy || (current && current.status !== "ready" && current.status !== "failed")) pollTimer = setTimeout(() => showCourse(courseId), 2500);
+}
+
+async function showCards(courseId) {
+  clearTimeout(pollTimer);
+  const cards = await api("GET", `/courses/${courseId}/knowledge`);
+  $app.innerHTML = `${topBar()}<button id="back">← Path</button><h1>Idea cards</h1>
+    <p class="muted small">Every idea extracted from the document. Answer challenges to unlock and level them up.</p>
+    ${cards.map((k) => `<div class="card" style="${k.unlocked ? "" : "opacity:.55"}">
+      <span class="chip">${esc(k.type.replace("_", " "))}</span> <span class="small muted">Unit ${k.unitIdx + 1}</span>
+      <h3 style="margin-top:6px">${k.unlocked ? "" : "🔒 "}${esc(k.title)} <span class="small" style="color:var(--warn)">${"★".repeat(k.stars)}${"☆".repeat(5 - k.stars)}</span></h3>
+      <div>${esc(k.explanation)}</div>
+      <blockquote>“${esc(k.sourceQuote)}”</blockquote>
+    </div>`).join("")}`;
+  document.getElementById("back").onclick = () => showCourse(courseId);
+}
+
+// ---------------- Session player ----------------
+function playSession(session) {
+  let i = session.challenges.findIndex((c) => !c.result);
+  if (i === -1) i = session.challenges.length;
+  const next = () => { i++; render(); };
+  const render = () => {
+    if (i >= session.challenges.length) return finish();
+    const ch = session.challenges[i];
+    $app.innerHTML = `<div class="bar"><button id="quit" style="padding:6px 10px">✕</button>
+        <div class="progress"><div style="width:${Math.round((i / session.challenges.length) * 100)}%"></div></div>
+        <span class="pill">${i + 1}/${session.challenges.length}</span></div>
+      <div><span class="chip">${MECH_ICON[ch.mechanic] || ""} ${esc(ch.mechanicLabel)}</span> ${ch.isReview ? `<span class="chip" style="color:var(--warn)">Review</span>` : ""}</div>
+      <h1>${esc(ch.title)}</h1>
+      <div id="stage"></div>
+      <div class="footer"><div><button class="primary block" id="check" disabled>Check</button></div></div>
+      <div id="sheet"></div>`;
+    document.getElementById("quit").onclick = () => showCourse(session.courseId);
+    const checkBtn = document.getElementById("check");
+    const ready = (ok) => { checkBtn.disabled = !ok; };
+    const getResponse = RENDERERS[ch.mechanic](document.getElementById("stage"), ch, ready);
+    checkBtn.onclick = async () => {
+      checkBtn.disabled = true;
+      checkBtn.textContent = ch.mechanic === "teach_back" ? "Listening…" : "Checking…";
+      try {
+        const result = await api("POST", `/sessions/${session.id}/answers`, { challengeId: ch.id, response: getResponse() });
+        showFeedback(ch, result, next);
+      } catch (e) { checkBtn.disabled = false; checkBtn.textContent = "Check"; alert(e.message); }
+    };
+  };
+  const finish = async () => {
+    let s;
+    try { s = await api("POST", `/sessions/${session.id}/complete`); } catch (e) { return showCourse(session.courseId); }
+    state.me = s.stats;
+    $app.innerHTML = `${topBar()}
+      <div class="big">${s.accuracy === 1 ? "🏆" : s.accuracy >= 0.7 ? "🎉" : "💪"}</div>
+      <h1 class="center">Lesson complete!</h1>
+      <div class="row center">
+        <div class="card"><div class="small muted">XP earned</div><div style="font-size:26px;font-weight:800">+${s.xpEarned}</div>${s.perfectBonus ? `<div class="small">incl. perfect bonus</div>` : ""}</div>
+        <div class="card"><div class="small muted">Accuracy</div><div style="font-size:26px;font-weight:800">${Math.round(s.accuracy * 100)}%</div></div>
+        <div class="card"><div class="small muted">Streak</div><div style="font-size:26px;font-weight:800">🔥 ${s.streak}</div></div>
+      </div>
+      ${s.unitsCompleted.map((u) => `<div class="card center">🎖️ Unit complete: <b>${esc(u.title)}</b></div>`).join("")}
+      ${s.nextUnit && s.unitsCompleted.length ? `<div class="card center">🔓 Unlocked: <b>${esc(s.nextUnit.title)}</b></div>` : ""}
+      <div class="footer"><div><button class="primary block" id="cont">Continue</button></div></div>`;
+    document.getElementById("cont").onclick = () => showCourse(session.courseId);
+  };
+  render();
+}
+
+function showFeedback(ch, r, next) {
+  const rv = r.reveal || {};
+  let detail = "";
+  if (rv.consequence) detail += `<p>${esc(rv.consequence)}</p>${r.correct ? "" : `<p class="small"><b>Better move:</b> ${esc(rv.bestOption)}</p>`}`;
+  if (rv.correctOrder && !r.correct) detail += `<b>Correct order</b><ol class="tight">${rv.correctOrder.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>`;
+  if (rv.missingLink && !r.correct) detail += `<p><b>Missing link:</b> ${esc(rv.missingLink)}</p>`;
+  if (rv.correction) detail += `<p><b>The mistake:</b> “${esc(rv.wrongStatement)}”<br><b>Actually:</b> ${esc(rv.correction)}</p>`;
+  if (rv.answer !== undefined && rv.tolerance !== undefined) detail += `<p><b>Answer:</b> ${esc(rv.answer)}${esc(rv.unit)}</p>`;
+  if (rv.pairs && !r.correct) detail += `<ul class="tight">${rv.pairs.map((p) => `<li>${esc(p.left)} → ${esc(p.right)}</li>`).join("")}</ul>`;
+  if (rv.answers && !r.correct) detail += `<ul class="tight">${rv.answers.map((a) => `<li>${esc(a.text)} → <b>${esc(a.bucket)}</b></li>`).join("")}</ul>`;
+  if (rv.cards && !r.correct) detail += `<ul class="tight">${rv.cards.map((c) => `<li>${c.isTrue ? "✅" : "❌"} ${esc(c.text)}<br><span class="small muted">${esc(c.why)}</span></li>`).join("")}</ul>`;
+  if (rv.npcReply) detail += `<div class="bubble">💬 ${esc(rv.npcReply)}</div>${rv.missedPoints?.length ? `<b>You could also mention</b><ul class="tight">${rv.missedPoints.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}${rv.misconceptions?.length ? `<b>Careful</b><ul class="tight">${rv.misconceptions.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}`;
+  document.getElementById("sheet").innerHTML = `<div class="sheet ${r.correct ? "good" : "bad"}"><div>
+    <h2 style="margin-top:0">${r.correct ? "✅ Nice!" : r.score > 0 ? "🟡 Almost" : "❌ Not quite"} <span class="small muted">+${r.xp} XP</span></h2>
+    ${detail}
+    <p>${esc(r.explanation)}</p>
+    ${r.sources?.length ? `<details><summary class="small muted">From the source</summary>${r.sources.map((s) => `<blockquote>“${esc(s.quote)}”</blockquote>`).join("")}</details>` : ""}
+    ${r.mastery?.length ? `<p class="small muted">${r.mastery.map((m) => `${esc(m.title)} ${"★".repeat(m.stars)}`).join(" · ")}</p>` : ""}
+    <button class="primary block" id="next">Continue</button></div></div>`;
+  document.getElementById("next").onclick = next;
+}
+
+// Each renderer draws the challenge and returns a function that builds the answer payload.
+const RENDERERS = {
+  swipe(el, ch, ready) {
+    const answers = {}; let idx = 0;
+    const draw = () => {
+      if (idx >= ch.cards.length) {
+        el.innerHTML = `<p class="muted">${esc(ch.prompt)}</p>` + ch.cards.map((c) => `<div class="card small">${answers[c.id] ? "👉 True" : "👈 False"} · ${esc(c.text)}</div>`).join("");
+        return ready(true);
+      }
+      const c = ch.cards[idx];
+      el.innerHTML = `<p class="muted">${esc(ch.prompt)} <span class="small">(${idx + 1}/${ch.cards.length})</span></p>
+        <div class="card swipecard" id="sc">${esc(c.text)}</div>
+        <div class="row"><button id="f">👈 False</button><button id="t">True 👉</button></div>`;
+      const pick = (v) => { answers[c.id] = v; idx++; draw(); };
+      document.getElementById("f").onclick = () => pick(false);
+      document.getElementById("t").onclick = () => pick(true);
+      const card = document.getElementById("sc"); let x0 = null;
+      card.onpointerdown = (e) => { x0 = e.clientX; card.setPointerCapture(e.pointerId); };
+      card.onpointermove = (e) => { if (x0 !== null) card.style.transform = `translateX(${e.clientX - x0}px) rotate(${(e.clientX - x0) / 20}deg)`; };
+      card.onpointerup = (e) => { const dx = e.clientX - x0; x0 = null; card.style.transform = ""; if (Math.abs(dx) > 80) pick(dx > 0); };
+    };
+    draw();
+    return () => ({ answers });
+  },
+  sequence(el, ch, ready) {
+    const placed = [];
+    const draw = () => {
+      el.innerHTML = `<p class="muted">${esc(ch.prompt)}</p><p class="small muted">Tap parts in order to snap them onto the line. Tap a placed part to remove it.</p>
+        <div class="stack">${ch.items.map((_, n) => { const it = ch.items.find((x) => x.id === placed[n]);
+          return `${n ? '<div class="arrow">↓</div>' : ""}<div class="slot ${it ? "filled" : ""}" data-slot="${n}">${it ? esc(it.text) : `<span class="muted small">Step ${n + 1}</span>`}</div>`; }).join("")}</div>
+        <h3 style="margin-top:16px">Parts</h3>${ch.items.filter((it) => !placed.includes(it.id)).map((it) => `<button class="opt" data-id="${it.id}">${esc(it.text)}</button>`).join("")}`;
+      el.querySelectorAll("[data-id]").forEach((b) => b.onclick = () => { placed.push(b.dataset.id); draw(); });
+      el.querySelectorAll("[data-slot]").forEach((s) => s.onclick = () => { const n = +s.dataset.slot; if (placed[n]) { placed.splice(n, 1); draw(); } });
+      ready(placed.length === ch.items.length);
+    };
+    draw();
+    return () => ({ order: placed });
+  },
+  chain(el, ch, ready) {
+    let chosen = null;
+    const draw = () => {
+      const opt = ch.options.find((o) => o.id === chosen);
+      el.innerHTML = `<p class="muted">${esc(ch.prompt)}</p><div class="stack">${ch.links.map((l, n) =>
+        `${n ? '<div class="arrow">⬇︎</div>' : ""}<div class="slot ${l === null ? (opt ? "filled" : "missing") : ""}">${l === null ? (opt ? esc(opt.text) : "❓ Missing link") : esc(l)}</div>`).join("")}</div>
+        <h3 style="margin-top:16px">Pick the missing link</h3>${ch.options.map((o) => `<button class="opt ${o.id === chosen ? "sel" : ""}" data-id="${o.id}">${esc(o.text)}</button>`).join("")}`;
+      el.querySelectorAll("[data-id]").forEach((b) => b.onclick = () => { chosen = b.dataset.id; draw(); });
+      ready(!!chosen);
+    };
+    draw();
+    return () => ({ optionId: chosen });
+  },
+  sort(el, ch, ready) {
+    const placements = {};
+    const draw = () => {
+      const pending = ch.items.filter((it) => !placements[it.id]);
+      const it = pending[0];
+      el.innerHTML = `<p class="muted">${esc(ch.prompt)}</p>
+        ${it ? `<div class="card swipecard">${esc(it.text)}</div><div class="bucketrow">${ch.buckets.map((b) => `<button data-b="${esc(b)}">${esc(b)}</button>`).join("")}</div>
+          <p class="small muted center">${ch.items.length - pending.length}/${ch.items.length} sorted</p>` : ""}
+        ${ch.buckets.map((b) => `<div class="card"><h3>${esc(b)}</h3>${ch.items.filter((x) => placements[x.id] === b).map((x) => `<div class="small" data-undo="${x.id}" style="cursor:pointer">• ${esc(x.text)} <span class="muted">↺</span></div>`).join("") || '<div class="small muted">—</div>'}</div>`).join("")}`;
+      el.querySelectorAll("[data-b]").forEach((btn) => btn.onclick = () => { placements[it.id] = btn.dataset.b; draw(); });
+      el.querySelectorAll("[data-undo]").forEach((d) => d.onclick = () => { delete placements[d.dataset.undo]; draw(); });
+      ready(pending.length === 0);
+    };
+    draw();
+    return () => ({ placements });
+  },
+  match(el, ch, ready) {
+    const pairs = {}; let left = null;
+    const colors = ["#5b5bf0", "#1f9d55", "#f29f05", "#d64545", "#0ea5b7", "#a855f7"];
+    const colorOf = (lid) => colors[ch.left.findIndex((l) => l.id === lid) % colors.length];
+    const draw = () => {
+      const rightOwner = Object.fromEntries(Object.entries(pairs).map(([l, r]) => [r, l]));
+      el.innerHTML = `<p class="muted">${esc(ch.prompt)}</p><p class="small muted">Tap a star on the left, then its match on the right.</p>
+        <div class="cols"><div class="stack">${ch.left.map((l) => `<button data-l="${l.id}" class="${left === l.id ? "sel" : ""}" style="${pairs[l.id] ? `border-left:6px solid ${colorOf(l.id)}` : ""}">${esc(l.text)}</button>`).join("")}</div>
+        <div class="stack">${ch.right.map((r) => `<button data-r="${r.id}" style="${rightOwner[r.id] ? `border-left:6px solid ${colorOf(rightOwner[r.id])}` : ""}">${esc(r.text)}</button>`).join("")}</div></div>`;
+      el.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => { left = b.dataset.l; delete pairs[left]; draw(); });
+      el.querySelectorAll("[data-r]").forEach((b) => b.onclick = () => {
+        if (!left) return;
+        for (const k of Object.keys(pairs)) if (pairs[k] === b.dataset.r) delete pairs[k];
+        pairs[left] = b.dataset.r; left = null; draw();
+      });
+      ready(Object.keys(pairs).length === ch.left.length);
+    };
+    draw();
+    return () => ({ pairs });
+  },
+  scenario(el, ch, ready) {
+    let chosen = null;
+    const draw = () => {
+      el.innerHTML = `<div class="card"><div class="small muted">🎭 ${esc(ch.character)}</div><p>${esc(ch.situation)}</p><b>${esc(ch.question)}</b></div>
+        ${ch.options.map((o) => `<button class="opt ${o.id === chosen ? "sel" : ""}" data-id="${o.id}">${esc(o.text)}</button>`).join("")}`;
+      el.querySelectorAll("[data-id]").forEach((b) => b.onclick = () => { chosen = b.dataset.id; draw(); });
+      ready(!!chosen);
+    };
+    draw();
+    return () => ({ optionId: chosen });
+  },
+  spot_error(el, ch, ready) {
+    let chosen = null;
+    const draw = () => {
+      el.innerHTML = `<p class="muted">${esc(ch.speaker)} is explaining. One thing they say is wrong. Tap it.</p>
+        ${ch.statements.map((s) => `<button class="opt bubble ${s.id === chosen ? "sel" : ""}" data-id="${s.id}">🗨️ ${esc(s.text)}</button>`).join("")}`;
+      el.querySelectorAll("[data-id]").forEach((b) => b.onclick = () => { chosen = b.dataset.id; draw(); });
+      ready(!!chosen);
+    };
+    draw();
+    return () => ({ statementId: chosen });
+  },
+  estimate(el, ch, ready) {
+    const step = (ch.max - ch.min) > 20 ? 1 : (ch.max - ch.min) / 100;
+    let value = Math.round((ch.min + ch.max) / 2 / step) * step;
+    el.innerHTML = `<div class="card"><p>${esc(ch.question)}</p>
+      <div class="big" id="v">${value}${esc(ch.unit)}</div>
+      <input type="range" id="r" min="${ch.min}" max="${ch.max}" step="${step}" value="${value}">
+      <div class="row small muted"><span>${ch.min}${esc(ch.unit)}</span><span style="text-align:right">${ch.max}${esc(ch.unit)}</span></div></div>`;
+    const r = document.getElementById("r");
+    r.oninput = () => { value = Number(r.value); document.getElementById("v").textContent = `${value}${ch.unit}`; };
+    ready(true);
+    return () => ({ value });
+  },
+  teach_back(el, ch, ready) {
+    el.innerHTML = `<div class="bubble">🧑 <b>${esc(ch.npcName)}:</b> ${esc(ch.npcQuestion)}</div>
+      <textarea id="t" placeholder="Explain it in your own words…"></textarea>`;
+    const t = document.getElementById("t");
+    t.oninput = () => ready(t.value.trim().split(/\s+/).length >= 5);
+    return () => ({ text: t.value });
+  },
+};
+
+async function boot() {
+  $app.innerHTML = `<p class="muted">Loading…</p>`;
+  try { await ensureUser(); await showHome(); }
+  catch (e) { $app.innerHTML = `<p class="error">Could not reach the backend: ${esc(e.message)}</p>`; }
+}
+boot();
+</script>
+</body>
+</html>

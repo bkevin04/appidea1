@@ -115,11 +115,14 @@ Ideas for later: city-builder (each mastered concept unlocks a building, and neg
 
 ## 9. Open questions
 
-- [ ] Who is the first user: you and people like you, students, or companies?
-- [ ] What kind of content first: nonfiction books, textbooks, or work documents?
-- [ ] Web-first or mobile app?
-- [ ] Session style: quick daily runs or longer deep-dive sessions?
-- [ ] How much building will you do yourself, and how comfortable are you with code?
+Decided on 2026-09-29:
+- [x] First users: individual learners (self-learners and students) who want to put in the effort. Not companies for now.
+- [x] Content: any document or book, on any subject.
+- [x] Platform: iOS app.
+- [x] Session style: quick daily sessions, Duolingo-style.
+- [x] Building: Claude builds everything; the founder directs.
+
+Still open:
 - [ ] Name ideas: *Unbook*, *Playbook*, *Lorecraft*, *Quest Reader*, *Kinetic*…
 
 ## 10. Suggested next steps
